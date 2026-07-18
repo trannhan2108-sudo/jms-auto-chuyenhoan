@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="theme-color" content="#E3000F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Auto Chuyển Hoàn JMS</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red: #E3000F;
+            --red-dark: #B8000C;
+            --red-light: #FF4D58;
+            --green: #10B981;
+            --green-dark: #059669;
+            --orange: #F59E0B;
+            --blue: #3B82F6;
+            --dark: #0F172A;
+            --dark-card: #1E293B;
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --white: #FFFFFF;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--gray-100);
+            color: var(--dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ─── SCREENS ─── */
+        .screen { display: none; min-height: 100vh; }
+        .screen.active { display: flex; flex-direction: column; }
+
+        /* ─── LOGIN SCREEN ─── */
+        #loginScreen {
+            background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .login-header .brand {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .login-header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .login-header .subtitle {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .login-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            animation: fadeInUp 0.6s ease 0.2s both;
+        }
+
+        .login-card h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 6px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            color: var(--dark);
+            background: var(--gray-50);
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--red);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(227,0,15,0.1);
+        }
+
+        .hint-text {
+            font-size: 11px;
+            color: var(--gray-400);
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        .status-msg {
+            text-align: center;
+            font-size: 14px;
+            min-height: 24px;
+            margin: 12px 0;
+            font-weight: 500;
+        }
+        .status-msg.error { color: var(--red); }
+        .status-msg.success { color: var(--green); }
+        .status-msg.loading { color: var(--blue); }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-red {
+            background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(227,0,15,0.4);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+        }
+
+        .btn-orange {
+            background: linear-gradient(135deg, var(--orange) 0%, #D97706 100%);
+            color: white;
+        }
+
+        .btn-gray {
+            background: var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ─── MAIN SCREEN ─── */
+        #mainScreen { background: var(--gray-100); }
+
+        .topbar {
+            background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(227,0,15,0.3);
+        }
+
+        .topbar h1 {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .topbar .logout-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .main-body {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: var(--shadow);
+        }
+
+        /* Scanner Input */
+        .scan-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .scan-input {
+            flex: 1;
+            padding: 13px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            color: var(--dark);
+            background: var(--gray-50);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .scan-input:focus {
+            border-color: var(--blue);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .scan-input::placeholder { color: var(--gray-400); }
+
+        .btn-add {
+            padding: 13px 20px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+
+        /* Code List */
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .list-header .count {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .btn-clear {
+            padding: 6px 14px;
+            background: var(--gray-200);
+            color: var(--gray-600);
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .code-list {
+            max-height: 150px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .code-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--dark);
+            font-family: 'Inter', monospace;
+        }
+
+        .code-item .remove-btn {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
+
+        /* Progress */
+        .progress-section {
+            display: none;
+        }
+        .progress-section.active { display: block; }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 6px;
+        }
+
+        .progress-bar-track {
+            height: 10px;
+            background: var(--gray-200);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green) 0%, var(--green-dark) 100%);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .stat-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .stat-ok {
+            background: #D1FAE5;
+            color: var(--green-dark);
+        }
+
+        .stat-fail {
+            background: #FEE2E2;
+            color: var(--red);
+        }
+
+        /* Log */
+        .log-area {
+            background: var(--dark);
+            border-radius: 10px;
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Inter', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            color: #94A3B8;
+        }
+
+        .log-area .log-ok { color: #34D399; }
+        .log-area .log-fail { color: #F87171; }
+        .log-area .log-info { color: #60A5FA; }
+        .log-area .log-warn { color: #FBBF24; }
+
+        /* Error copy */
+        .error-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .error-count {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--red);
+        }
+
+        .btn-copy {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, var(--orange) 0%, #D97706 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ─── Animations ─── */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading { animation: pulse 1.5s infinite; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+<!-- ════════ LOGIN SCREEN ════════ -->
+<div id="loginScreen" class="screen active">
+    <div class="login-header">
+        <div class="brand">J&T Express Vietnam</div>
+        <h1>AUTO CHUYỂN HOÀN</h1>
+        <div class="subtitle">iData K3S Edition • v1.0</div>
+    </div>
+    <div class="login-card">
+        <h2>🔐 Đăng Nhập JMS</h2>
+        <div class="input-group">
+            <label>authToken</label>
+            <input type="text" id="tokenInput" placeholder="Dán authToken vào đây..." autocomplete="off">
+        </div>
+        <p class="hint-text">
+            💡 <b>Cách lấy token:</b> Mở Chrome → jms.jtexpress.vn → F12 → Application → Local Storage → copy <b>authToken</b>
+        </p>
+        <div id="loginStatus" class="status-msg"></div>
+        <button class="btn btn-red" id="btnLogin" onclick="doLogin()">ĐĂNG NHẬP ▶</button>
+    </div>
+</div>
+
+<!-- ════════ MAIN SCREEN ════════ -->
+<div id="mainScreen" class="screen">
+    <div class="topbar">
+        <h1>🚀 AUTO CHUYỂN HOÀN</h1>
+        <button class="logout-btn" onclick="doLogout()">Đăng xuất</button>
+    </div>
+
+    <div class="main-body">
+        <!-- Scanner Input -->
+        <div class="card">
+            <div class="scan-row">
+                <input type="text" class="scan-input" id="scanInput"
+                       placeholder="📷 Bắn mã vào đây..." autocomplete="off">
+                <button class="btn-add" onclick="addCode()">THÊM</button>
+            </div>
+        </div>
+
+        <!-- Code List -->
+        <div class="card">
+            <div class="list-header">
+                <span class="count" id="codeCount">📦 Danh sách: 0 mã</span>
+                <button class="btn-clear" onclick="clearCodes()">🗑️ Xóa hết</button>
+            </div>
+            <div class="code-list" id="codeList">
+                <div style="text-align:center; color: var(--gray-400); font-size: 13px; padding: 20px;">
+                    Chưa có mã nào. Bắn mã bằng súng quét hoặc nhập tay.
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Button -->
+        <button class="btn btn-green" id="btnRegister" onclick="startProcessing()">
+            ▶ ĐĂNG KÝ CHUYỂN HOÀN
+        </button>
+
+        <!-- Progress -->
+        <div class="card progress-section" id="progressSection">
+            <div class="progress-info">
+                <span id="progressText">0/0</span>
+                <span id="progressPct">0%</span>
+            </div>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="stats-row">
+                <span class="stat-badge stat-ok">✅ <span id="okCount">0</span></span>
+                <span class="stat-badge stat-fail">❌ <span id="failCount">0</span></span>
+            </div>
+        </div>
+
+        <!-- Log -->
+        <div class="card">
+            <div class="log-area" id="logArea">
+                <div class="log-info">Sẵn sàng. Bắn mã và nhấn Đăng ký.</div>
+            </div>
+        </div>
+
+        <!-- Error Copy -->
+        <div class="card">
+            <div class="error-row">
+                <span class="error-count" id="errorLabel">❌ Mã lỗi: 0</span>
+                <button class="btn-copy" onclick="copyErrors()">📋 COPY MÃ LỖI</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  CONFIGURATION
+// ═══════════════════════════════════════════════════════
+const BASE_URL = 'https://jmsgw.jtexpress.vn';
+let authToken = localStorage.getItem('jms_token') || '';
+let codes = [];
+let errorCodes = [];
+let isProcessing = false;
+
+// ═══════════════════════════════════════════════════════
+//  API FUNCTIONS
+// ═══════════════════════════════════════════════════════
+
+function makeHeaders() {
+    return {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'authToken': authToken,
+        'lang': 'VN',
+        'langType': 'VN',
+        'routeName': 'returnAndForwardMaintainAddSite',
+        'timezone': 'GMT+0700',
+    };
+}
+
+async function apiCheckToken(token) {
+    try {
+        const r = await fetch(`${BASE_URL}/authn/checkToken`, {
+            headers: { ...makeHeaders(), authToken: token }
+        });
+        const d = await r.json();
+        return d.code === 1;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function apiFindWaybill(waybillNo) {
+    const url = `${BASE_URL}/operatingplatform/rebackTransferExpress/findByWaybillNo?waybillNo=${waybillNo}&applyTypeCode=4`;
+    const r = await fetch(url, { headers: makeHeaders() });
+    const d = await r.json();
+    if (d.code === 1 && d.data) return { ok: true, data: d.data };
+    return { ok: false, msg: d.msg || 'Không tìm thấy đơn' };
+}
+
+function buildPayload(data, applyType) {
+    const p = { ...data };
+    p.applyTypeCode = applyType;
+    p.countryId = '1';
+    if (applyType === 4) {
+        p.rebackReasonCode = data.code;
+        p.rebackTransferReason = data.remind;
+        p.rebackTypeValue = data.returnType;
+        p.rebackTypeCode = data.code;
+    } else {
+        p.code = null; p.returnType = null; p.remind = null;
+        p.rebackTypeValue = null;
+    }
+    p.newReceiverProvince = { id: data.newReceiverProvinceId, name: data.newReceiverProvinceName, type: 2, dataType: 2 };
+    p.newReceiverCity = { id: data.newReceiverCityId, name: data.newReceiverCityName, type: 3, dataType: 2 };
+    p.newReceiverArea = { id: data.newReceiverAreaId, name: data.newReceiverAreaName, type: 4, dataType: 2 };
+    return p;
+}
+
+async function apiRegister(data, applyType) {
+    const ep = applyType === 4 ? '/add' : '/registerSecondReback';
+    const url = `${BASE_URL}/operatingplatform/rebackTransferExpress${ep}`;
+    const r = await fetch(url, {
+        method: 'POST',
+        headers: makeHeaders(),
+        body: JSON.stringify(buildPayload(data, applyType))
+    });
+    return await r.json();
+}
+
+async function processOneCode(code) {
+    try {
+        // Buoc 1: Tim don
+        const find = await apiFindWaybill(code);
+        if (!find.ok) return { ok: false, msg: 'Không tìm thấy thông tin đơn' };
+
+        // Buoc 2: Dang ky lan 1
+        const r1 = await apiRegister(find.data, 4);
+        if (r1.succ) return { ok: true, msg: 'Đăng ký thành công (Lần 1)' };
+
+        const c1 = String(r1.code || '');
+        const m1 = (r1.msg || '').toLowerCase();
+        if (c1.includes('137043004') || m1.includes('đã ghi nhận'))
+            return { ok: false, msg: 'Đã đăng ký trước đó, không cần làm lại' };
+
+        // Buoc 3: Dang ky lan 2
+        const r2 = await apiRegister(find.data, 6);
+        if (r2.succ) return { ok: true, msg: 'Đăng ký thành công (Lần 2)' };
+
+        return { ok: false, msg: `Thất bại: ${r2.msg || 'Lỗi không xác định'}` };
+    } catch (e) {
+        return { ok: false, msg: `Lỗi kết nối: ${e.message}` };
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+//  UI FUNCTIONS
+// ═══════════════════════════════════════════════════════
+
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+// ─── LOGIN ─────────────────────────────────────────
+async function doLogin() {
+    const input = document.getElementById('tokenInput');
+    const status = document.getElementById('loginStatus');
+    const btn = document.getElementById('btnLogin');
+    const token = input.value.trim();
+
+    if (!token) { 
+        status.className = 'status-msg error'; 
+        status.textContent = 'Vui lòng nhập token!'; 
+        return; 
+    }
+
+    btn.disabled = true;
+    status.className = 'status-msg loading';
+    status.textContent = '⏳ Đang kiểm tra token...';
+
+    const ok = await apiCheckToken(token);
+    if (ok) {
+        authToken = token;
+        localStorage.setItem('jms_token', token);
+        status.className = 'status-msg success';
+        status.textContent = '✅ Đăng nhập thành công!';
+        setTimeout(() => {
+            showScreen('mainScreen');
+            document.getElementById('scanInput').focus();
+        }, 500);
+    } else {
+        status.className = 'status-msg error';
+        status.textContent = '❌ Token không hợp lệ hoặc đã hết hạn!';
+    }
+    btn.disabled = false;
+}
+
+function doLogout() {
+    authToken = '';
+    localStorage.removeItem('jms_token');
+    document.getElementById('tokenInput').value = '';
+    document.getElementById('loginStatus').textContent = '';
+    showScreen('loginScreen');
+}
+
+// ─── SCANNER & CODE LIST ───────────────────────────
+function addCode(codeValue) {
+    const input = document.getElementById('scanInput');
+    const code = (codeValue || input.value).trim();
+    if (!code) return;
+    if (codes.includes(code)) {
+        input.value = '';
+        input.focus();
+        return;
+    }
+    codes.push(code);
+    renderCodeList();
+    input.value = '';
+    input.focus();
+}
+
+function removeCode(code) {
+    codes = codes.filter(c => c !== code);
+    renderCodeList();
+}
+
+function clearCodes() {
+    codes = [];
+    errorCodes = [];
+    renderCodeList();
+    document.getElementById('logArea').innerHTML = '<div class="log-info">Sẵn sàng. Bắn mã và nhấn Đăng ký.</div>';
+    document.getElementById('progressSection').classList.remove('active');
+    document.getElementById('errorLabel').textContent = '❌ Mã lỗi: 0';
+    document.getElementById('okCount').textContent = '0';
+    document.getElementById('failCount').textContent = '0';
+}
+
+function renderCodeList() {
+    const el = document.getElementById('codeList');
+    const count = document.getElementById('codeCount');
+    count.textContent = `📦 Danh sách: ${codes.length} mã`;
+
+    if (codes.length === 0) {
+        el.innerHTML = '<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:20px;">Chưa có mã nào. Bắn mã bằng súng quét hoặc nhập tay.</div>';
+        return;
+    }
+    el.innerHTML = codes.map(c =>
+        `<div class="code-item">
+            <span>${c}</span>
+            <button class="remove-btn" onclick="removeCode('${c}')">✕</button>
+        </div>`
+    ).join('');
+}
+
+// ─── PROCESSING ────────────────────────────────────
+async function startProcessing() {
+    if (isProcessing || codes.length === 0) {
+        if (!codes.length) addLog('⚠️ Danh sách rỗng!', 'warn');
+        return;
+    }
+
+    isProcessing = true;
+    errorCodes = [];
+    const btn = document.getElementById('btnRegister');
+    btn.textContent = '⏳ ĐANG XỬ LÝ...';
+    btn.className = 'btn btn-orange';
+    btn.disabled = true;
+
+    document.getElementById('progressSection').classList.add('active');
+    document.getElementById('logArea').innerHTML = '';
+    addLog(`─── Bắt đầu xử lý ${codes.length} mã ───`, 'info');
+
+    const total = codes.length;
+    let okTotal = 0;
+
+    for (let i = 0; i < total; i++) {
+        const code = codes[i];
+        const result = await processOneCode(code);
+
+        if (result.ok) {
+            okTotal++;
+            addLog(`✅ ${code} — ${result.msg}`, 'ok');
+        } else {
+            errorCodes.push(code);
+            addLog(`❌ ${code} — ${result.msg}`, 'fail');
+        }
+
+        // Update progress
+        const pct = Math.round(((i + 1) / total) * 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = `${i + 1}/${total}`;
+        document.getElementById('progressPct').textContent = pct + '%';
+        document.getElementById('okCount').textContent = okTotal;
+        document.getElementById('failCount').textContent = errorCodes.length;
+        document.getElementById('errorLabel').textContent = `❌ Mã lỗi: ${errorCodes.length}`;
+    }
+
+    addLog(`─── HOÀN THÀNH: ✅ ${okTotal}/${total}  ❌ ${errorCodes.length}/${total} ───`, 'info');
+    btn.textContent = '▶ ĐĂNG KÝ CHUYỂN HOÀN';
+    btn.className = 'btn btn-green';
+    btn.disabled = false;
+    isProcessing = false;
+}
+
+function addLog(text, type) {
+    const el = document.getElementById('logArea');
+    const div = document.createElement('div');
+    div.className = `log-${type || 'info'}`;
+    div.textContent = text;
+    el.insertBefore(div, el.firstChild);
+}
+
+function copyErrors() {
+    if (errorCodes.length === 0) {
+        addLog('Không có mã lỗi!', 'warn');
+        return;
+    }
+    const text = errorCodes.join('\n');
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            addLog(`📋 Đã copy ${errorCodes.length} mã lỗi vào clipboard!`, 'info');
+        });
+    } else {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        addLog(`📋 Đã copy ${errorCodes.length} mã lỗi!`, 'info');
+    }
+}
+
+// ─── INIT ──────────────────────────────────────────
+document.getElementById('scanInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addCode();
+    }
+});
+
+document.getElementById('tokenInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        doLogin();
+    }
+});
+
+// Auto-login if token saved
+if (authToken) {
+    document.getElementById('tokenInput').value = authToken;
+    apiCheckToken(authToken).then(ok => {
+        if (ok) {
+            showScreen('mainScreen');
+            setTimeout(() => document.getElementById('scanInput').focus(), 300);
+        }
+    });
+}
+</script>
+
+</body>
+</html>
